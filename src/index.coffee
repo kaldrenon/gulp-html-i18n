@@ -46,6 +46,11 @@ replaceProperties = (content, properties, lv) ->
   content.replace langRegExp, (full, propName) ->
     res = getProperty propName, properties
     if typeof res isnt 'string'
+      if options.failOnMissing
+        throw "#{res} isn't a string!"
+      else
+        console.warn "#{res} isn't a string!"
+
       if !options.fallback
         res = '*' + propName + '*'
       else
