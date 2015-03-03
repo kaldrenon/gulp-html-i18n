@@ -21,7 +21,8 @@ getProperty = (propName, properties) ->
 
     handleUndefined(propName) if res == undefined
 
-  if options.escapeQuotes == true
+  if options.escapeQuotes == true && typeof res == "string"
+    console.log(typeof res)
     res = res.replace(/"/g, '\\"')
     res = res.replace(/'/g, "\\'")
 
