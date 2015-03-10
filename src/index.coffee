@@ -47,9 +47,9 @@ replaceProperties = (content, properties, lv) ->
     res = getProperty propName, properties
     if typeof res isnt 'string'
       if options.failOnMissing
-        throw "#{res} isn't a string!"
+        throw "#{propName}: #{res} isn't a string!"
       else
-        console.warn "#{res} isn't a string!"
+        console.warn "#{propName}: #{res} isn't a string!"
 
       if !options.fallback
         res = '*' + propName + '*'
