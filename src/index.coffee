@@ -13,13 +13,13 @@ supportedType = ['.js', '.json']
 #
 # Convert a property name into a reference to the definition
 #
-getProperty = (propName, properties) ->
+getProperty = (propName, properties, inFallback) ->
   tmp = propName.split '.'
   res = properties
   while tmp.length and res
     res = res[tmp.shift()]
 
-    handleUndefined(propName) if res == undefined
+    handleUndefined(propName, inFallback) if res == undefined
 
   if options.escapeQuotes == true && typeof res == "string"
     res = res.replace(/"/g, '&quot;')
@@ -30,26 +30,29 @@ getProperty = (propName, properties) ->
 #
 # Handler for undefined props
 #
-handleUndefined = (propName) ->
-  if options.failOnMissing
-    throw "#{propName} not found in definition file!"
-  else
-    console.warn "#{propName} not found in definition file!"
+handleUndefined = (propName, inFallback) ->
+  if (options.fallback && inFallback)
+    if options.failOnMissing
+      throw "#{propName} not found in definition file!"
+    else
+      console.warn "#{propName} not found in definition file!"
 
 #
 # Does the actual work of substituting tags for definitions
 #
-replaceProperties = (content, properties, lv) ->
+replaceProperties = (content, properties, lv, inFallback) ->
   lv = lv || 1
+  inFallback = inFallback || false
   if not properties
     return content
   content.replace langRegExp, (full, propName) ->
-    res = getProperty propName, properties
+    res = getProperty propName, properties, inFallback
     if typeof res isnt 'string'
-      if options.failOnMissing
-        throw "#{propName}: #{res} isn't a string!"
-      else
-        console.warn "#{propName}: #{res} isn't a string!"
+      if (options.fallback && inFallback)
+        if options.failOnMissing
+          throw "#{propName}: #{res} isn't a string!"
+        else
+          console.warn "#{propName}: #{res} isn't a string!"
 
       if !options.fallback
         res = '*' + propName + '*'
@@ -59,7 +62,7 @@ replaceProperties = (content, properties, lv) ->
       if lv > 3
         res = '**' + propName + '**'
       else
-        res = replaceProperties res, properties, lv + 1
+        res = replaceProperties res, properties, lv + 1, inFallback
     res
 
 #
@@ -223,10 +226,7 @@ module.exports = (opt = {}) ->
               langResource[lang]
 
             if options.fallback
-              console.log lang
-              console.log content
-              content = replaceProperties content, langResource[options.fallback]
-              console.log content
+              content = replaceProperties content, langResource[options.fallback], 1, true
 
             if opt.trace
               tracePath = path.relative(process.cwd(), originPath)
